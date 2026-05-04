@@ -1,0 +1,59 @@
+# =============================================================================
+# Default Configuration – ML for CFD: Comparative Study
+# =============================================================================
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+data:
+  filename: "2D_rdb_NA_NA"           # HDF5 stem (without .h5)
+  base_path: "../data/"             # Relative path to the data directory
+  initial_step: 10                   # Number of context timesteps fed as input
+  t_train: 101                       # Number of total timesteps to supervise (PDEBench RDB reference)
+  test_ratio: 0.1                    # Fraction of seeds held out for test
+  val_ratio: 0.1                     # Separate validation split (disjoint from train/test)
+  num_workers: 0                     # DataLoader workers (0 = main thread)
+  seed: 42                           # RNG seed for reproducibility
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  epochs: 200                        # full run target for U-Net, U-Net (LoMix), and FNO
+  batch_size: 4
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  scheduler_step: 100                # LR × 0.5 midway for 200-epoch runs
+  scheduler_gamma: 0.5
+  model_update_freq: 1               # Validate every epoch for early stopping
+  gradient_clip: 1.0                 # Max gradient norm (0 = disabled)
+  early_stopping_patience: 20        # Stop after 20 epochs without val improvement
+  early_stopping_min_delta: 0.0
+
+# ── Quick mode (sanity check) ─────────────────────────────────────────────────
+quick:
+  enabled: false
+  max_samples: 20                    # Cap dataset size
+  epochs: 3
+  batch_size: 2
+
+# ── U-Net ──────────────────────────────────────────────────────────────────────
+unet:
+  init_features: 32
+  use_lomix: true                    # True = UNet2dLoMix, False = vanilla UNet2d
+  dropout: 0.0
+  # Autoregressive rollout settings
+  ar_mode: true
+  pushforward: true
+  unroll_step: 20
+
+# ── FNO ───────────────────────────────────────────────────────────────────────
+fno:
+  modes1: 12
+  modes2: 12
+  width: 20
+  ar_mode: true
+  unroll_step: 20
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+  checkpoint_dir: "results/checkpoints"
+  log_dir: "results/logs"
+  figure_dir: "figures"
+  results_dir: "results"
