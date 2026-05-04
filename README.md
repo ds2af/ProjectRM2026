@@ -1,4 +1,4 @@
-# achine Learning for SWE-Based Fluid Flow Simulation: A Comparative Study of U-Net, U-Net (LoMix), and FNO
+# Machine Learning for SWE-Based Fluid Flow Simulation: A Comparative Study of U-Net, U-Net (LoMix), and FNO
 
 **Course:** Research Methods  
 **Author:** Dipesh Shrestha
