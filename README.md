@@ -20,7 +20,7 @@ Machine learning surrogate models can accelerate PDE solving by orders of magnit
 
 - **Automated training pipeline**: Single command to train all models sequentially
 - **Comprehensive evaluation**: RMSE, inference time
-- **Publication-ready figures**: Field comparisons, error curves, speedup plots, generalization analysis
+- **Publication-ready figures**: Field comparisons, error curves, speedup plots
 - **VTK export**: Visualization-ready output files for ParaView/VisIt
 
 ## Quick Start
@@ -100,7 +100,6 @@ python scripts/generate_figures.py
 - **fig4_error_comparison.png** — RMSE timeline (autoregressive rollout error growth)
 - **fig4_error_comparison_bar.png** — Summary bar chart: RMSE, rel_l2, max_error
 - **fig5_speedup.png** — Inference time comparison
-- **fig6_generalization.png** — Out-of-distribution performance on alternate dataset
 
 
 ### VTK Export (3D Visualization)
@@ -175,7 +174,7 @@ U-Net backbone with **multi-scale output fusion**. Produces predictions at 4 dec
 
 - **Training:** `train_unet.py` (default)
 - **Checkpoint:** `results/checkpoints/unet_lomix_best.pt`
-- **Purpose:** Test whether multi-scale fusion improves generalization
+- **Purpose:** Compare multi-scale fusion against the vanilla U-Net baseline
 
 ### FNO2d (Fourier Neural Operator)
 
