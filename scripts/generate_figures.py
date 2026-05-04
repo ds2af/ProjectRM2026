@@ -13,7 +13,6 @@ Figures produced
 2. figures/fig4_error_comparison.png  (RMSE per timestep, merged across models)
 2b. figures/fig4_error_comparison_bar.png  (bar-chart summary: RMSE, Relative L2, Max Error)
 3. figures/fig5_speedup.png
-4. figures/fig6_generalization.png
 """
 
 from __future__ import annotations
@@ -121,7 +120,6 @@ def parse_args():
         default=1,
         help="Temporal sampling stride for Figure 4 RMSE timeline (1 = every timestep, 2 = every other timestep, etc.)",
     )
-    p.add_argument("--gen_samples", type=int, default=3)
     p.add_argument("--dpi", type=int, default=150, help="Output image DPI")
     return p.parse_args()
 
@@ -676,105 +674,6 @@ def fig5_speedup(summary: dict):
     save(fig, "fig5_speedup.png")
 
 
-def evaluate_generalization(cfg: dict, models: dict[str, torch.nn.Module], device: torch.device, max_samples: int) -> dict:
-    ini = cfg["data"]["initial_step"]
-    alt_name = "2D_rdb_alt_subset"
-    alt_base = str((ROOT / "../data_alt").resolve())
-    alt_path = Path(alt_base) / f"{alt_name}.h5"
-
-    # Keep figure generation usable even when optional OOD subset is absent.
-    if not alt_path.exists():
-        print(f"  [gen] Skipping Figure 6: missing alternate dataset -> {alt_path}")
-        return {}
-
-    ds = SWEDataset(
-        filename=alt_name,
-        saved_folder=alt_base,
-        initial_step=ini,
-        if_test=True,
-        test_ratio=cfg["data"].get("test_ratio", 0.1),
-        val_ratio=cfg["data"].get("val_ratio", 0.1),
-    )
-    dsg = SWEDatasetWithGrid(
-        filename=alt_name,
-        saved_folder=alt_base,
-        initial_step=ini,
-        if_test=True,
-        test_ratio=cfg["data"].get("test_ratio", 0.1),
-        val_ratio=cfg["data"].get("val_ratio", 0.1),
-    )
-
-    n_eval = min(max_samples, len(ds))
-    out: dict[str, dict] = {}
-
-    for key in MODEL_ORDER:
-        if key not in models:
-            continue
-
-        rmse_vals, rel_vals, max_vals = [], [], []
-        for i in range(n_eval):
-            if key == "fno":
-                xx, yy, grid = dsg[i]
-            else:
-                xx, yy = ds[i]
-                grid = None
-
-            pred = predict_trajectory(key, models[key], xx, yy, grid, ini, device, cfg)
-            m = compute_all_metrics(pred.unsqueeze(0), yy.unsqueeze(0), initial_step=ini)
-            rmse_vals.append(m["rmse"])
-            rel_vals.append(m["rel_l2"])
-            max_vals.append(m["max_error"])
-
-        out[key] = {
-            "rmse": float(np.mean(rmse_vals)),
-            "rel_l2": float(np.mean(rel_vals)),
-            "max_error": float(np.mean(max_vals)),
-            "n_samples": n_eval,
-            "dataset": alt_name,
-        }
-
-    save_path = ROOT / "results" / "generalization_metrics.json"
-    with save_path.open("w") as f:
-        json.dump(out, f, indent=2)
-    print(f"  [gen] Saved -> {save_path}")
-    return out
-
-
-def fig6_generalization(gen_metrics: dict):
-    models = [m for m in MODEL_ORDER if m in gen_metrics]
-    labels = [MODEL_LABELS[m] for m in models]
-    colors = [COLORS[m] for m in models]
-    rmse = [gen_metrics[m]["rmse"] for m in models]
-    rel = [gen_metrics[m]["rel_l2"] for m in models]
-    n_samples = gen_metrics[models[0]]["n_samples"] if models else 0
-
-    x = np.arange(len(models))
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.1))
-
-    b1 = axes[0].bar(x, rmse, color=colors, edgecolor="white")
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(labels, rotation=18, ha="right")
-    axes[0].set_ylabel("RMSE")
-    axes[0].set_title("OOD RMSE on unseen SWE conditions", fontweight="bold")
-    for b, v in zip(b1, rmse):
-        axes[0].text(b.get_x() + b.get_width() / 2, v * 1.02, f"{v:.4f}", ha="center", va="bottom", fontsize=8)
-
-    b2 = axes[1].bar(x, rel, color=colors, edgecolor="white")
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(labels, rotation=18, ha="right")
-    axes[1].set_ylabel("Relative L2")
-    axes[1].set_title("OOD relative error", fontweight="bold")
-    for b, v in zip(b2, rel):
-        axes[1].text(b.get_x() + b.get_width() / 2, v * 1.02, f"{v:.4f}", ha="center", va="bottom", fontsize=8)
-
-    fig.suptitle(
-        f"Figure 6. Generalization across unseen simulation conditions (n={n_samples} test seeds)",
-        fontsize=11,
-        fontweight="bold",
-    )
-    save(fig, "fig6_generalization.png")
-
-
 def main():
     global OUTPUT_DPI, MODEL_ORDER
     args = parse_args()
@@ -843,10 +742,6 @@ def main():
     )
     fig4_error_comparison_bar(summary)
     fig5_speedup(summary)
-
-    gen_metrics = evaluate_generalization(cfg, models, device, max_samples=max(1, args.gen_samples))
-    if gen_metrics:
-        fig6_generalization(gen_metrics)
 
     print(f"[generate_figures] Done. Figures saved in {FIG_DIR}")
 
