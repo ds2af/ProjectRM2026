@@ -20,7 +20,7 @@ Machine learning surrogate models can accelerate PDE solving by orders of magnit
 
 - **Automated training pipeline**: Single command to train all models sequentially
 - **Comprehensive evaluation**: RMSE, inference time
-- **Publication-ready figures**: Field comparisons, error curves, speedup plots
+- **Publication-ready figures**: Training/validation loss curves, field comparisons, RMSE curves, aggregate RMSE plots, speedup plots
 - **VTK export**: Visualization-ready output files for ParaView/VisIt
 
 ## Quick Start
@@ -91,13 +91,15 @@ python scripts/evaluate_all.py
 ### Figure Generation
 
 ```bash
-# Generate all publication figures (Figures 3–5)
+# Generate all publication figures (Figures 1–5)
 python scripts/generate_figures.py
 ```
 
 **Figures produced:**
-- **fig3_field_comparison.png** — Spatial field predictions at a single timestep
-- **fig4_error_comparison.png** — RMSE timeline (autoregressive rollout error growth)
+- **fig1_training_validation_loss.png** — Training and validation loss curves for each model
+- **fig2_field_comparison.png** — Spatial field predictions at a single timestep
+- **fig3_error_comparison.png** — RMSE timeline (autoregressive rollout error growth)
+- **fig4_aggregate_rmse.png** — Aggregate RMSE comparison across models
 - **fig5_speedup.png** — Inference time comparison
 
 
@@ -116,6 +118,36 @@ python scripts/export_vtk.py --model unet_lomix --n_samples 3 --n_timesteps 50
 
 **Outputs:** `results/vtk/{model_name}/sample*.vtk` files
 
+### Repeated Inference Timing & Bootstrap CI
+
+```bash
+# Measure 25 inference runs per model with bootstrap 95% confidence intervals
+python scripts/measure_inference_time.py --config configs/default.yaml
+
+# Customize number of runs
+python scripts/measure_inference_time.py --config configs/default.yaml --runs 50
+
+# Specify checkpoint and output directories
+python scripts/measure_inference_time.py \
+  --config configs/default.yaml \
+  --runs 25 \
+  --checkpoint_dir results/checkpoints \
+  --out_dir results/inference_timing
+```
+
+**Outputs:**
+- `results/inference_timing/inference_times.csv` — One row per run per model (25 runs × 3 models = 75 rows)
+- `results/inference_timing/inference_time_boxplot.png` — Boxplot with bootstrap 95% CI notches
+
+**CSV format:**
+```
+run,model,inference_time_s
+1,U-Net,1.2345
+1,U-Net (LoMix),1.1234
+1,FNO,0.8765
+...
+```
+
 ## Project Structure
 
 ```
@@ -132,7 +164,7 @@ python scripts/export_vtk.py --model unet_lomix --n_samples 3 --n_timesteps 50
 │   ├── evaluate_all.py                # Aggregate metrics into JSON summary
 │   ├── generate_figures.py            # Generate publication figures (3–6)
 │   ├── export_vtk.py                  # Export predictions to VTK
-│   └── run_repeated_significance.py   # Repeated training + statistical testing
+│   └── measure_inference_time.py      # Generate boxplot with bootstrap 95% CI for inference times
 ├── src/
 │   ├── models/
 │   │   ├── unet.py                    # UNet2d & UNet2dLoMix implementations

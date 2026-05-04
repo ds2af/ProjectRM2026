@@ -1,5 +1,5 @@
 """
-Generate three publication figures for the three-model SWE surrogate comparison.
+Generate five publication figures for the three-model SWE surrogate comparison.
 
 AI Disclaimer
 -------------
@@ -9,14 +9,17 @@ and takes responsibility for the final implementation used in this project.
 
 Figures produced
 ----------------
-1. figures/fig3_field_comparison.png
-2. figures/fig4_error_comparison.png  (RMSE per timestep, merged across models)
-3. figures/fig5_speedup.png
+1. figures/fig1_training_validation_loss.png
+2. figures/fig2_field_comparison.png
+3. figures/fig3_error_comparison.png  (RMSE per timestep, merged across models)
+4. figures/fig4_aggregate_rmse.png
+5. figures/fig5_speedup.png
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import math
 import os
@@ -128,6 +131,71 @@ def save(fig: plt.Figure, name: str):
     fig.savefig(out, dpi=OUTPUT_DPI, bbox_inches="tight")
     plt.close(fig)
     print(f"  [fig] Saved -> {out}")
+
+
+def load_training_history(model_key: str) -> list[dict]:
+    path = ROOT / "results" / "logs" / f"{model_key}_log.csv"
+    if not path.exists():
+        print(f"  [warn] Missing training log: {path}")
+        return []
+
+    rows: list[dict] = []
+    with path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                rows.append(
+                    {
+                        "epoch": int(row["epoch"]),
+                        "train_loss": float(row["train_loss"]),
+                        "val_loss": float(row["val_loss"]),
+                    }
+                )
+            except (KeyError, ValueError):
+                continue
+    return rows
+
+
+def fig2_training_validation_loss():
+    histories = {key: load_training_history(key) for key in MODEL_ORDER}
+    if not any(histories.values()):
+        print("  [warn] Skipping Figure 1: no training logs available")
+        return
+
+    fig, axes = plt.subplots(1, len(MODEL_ORDER), figsize=(4.6 * len(MODEL_ORDER), 3.8))
+    if len(MODEL_ORDER) == 1:
+        axes = [axes]
+
+    for ax, model_key in zip(axes, MODEL_ORDER):
+        history = histories.get(model_key, [])
+        ax.set_title(MODEL_LABELS[model_key], fontweight="bold", color=COLORS[model_key])
+        if not history:
+            ax.text(0.5, 0.5, "No log available", ha="center", va="center", transform=ax.transAxes)
+            ax.set_axis_off()
+            continue
+
+        epochs = np.array([row["epoch"] for row in history], dtype=int)
+        train_loss = np.array([row["train_loss"] for row in history], dtype=float)
+        val_loss = np.array([row["val_loss"] for row in history], dtype=float)
+
+        ax.plot(epochs, train_loss, color=COLORS[model_key], linewidth=2.0, label="Train")
+        ax.plot(epochs, val_loss, color="#333333", linewidth=2.0, linestyle="--", label="Validation")
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Loss")
+        ax.set_yscale("log")
+        ax.grid(True, alpha=0.3)
+
+        finite_vals = np.concatenate([train_loss[np.isfinite(train_loss)], val_loss[np.isfinite(val_loss)]])
+        if finite_vals.size:
+            ymin = max(float(np.min(finite_vals)) * 0.8, 1e-8)
+            ymax = float(np.max(finite_vals)) * 1.2
+            if ymax > ymin:
+                ax.set_ylim(ymin, ymax)
+
+    axes[0].legend(loc="upper right")
+    fig.suptitle("Figure 1. Training and validation loss curves", fontsize=11, fontweight="bold")
+    fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.95])
+    save(fig, "fig1_training_validation_loss.png")
 
 
 def ensure_min_timesteps(timesteps: list[int], t_max: int, ini: int, min_count: int = 3) -> list[int]:
@@ -325,7 +393,7 @@ def fig3_field_comparison(
         axes[i].set_yticks([])
         _style_fig3_panel_frame(axes[i], COLORS[key])
 
-    fig.suptitle(f"Figure 3. Comparison of SWE solutions and ML predictions (timestep {t_idx})", fontsize=12, fontweight="bold")
+    fig.suptitle(f"Figure 2. Comparison of SWE solutions and ML predictions (timestep {t_idx})", fontsize=12, fontweight="bold")
     fig.tight_layout(rect=[0.0, 0.0, 0.90, 0.93])
     cax = fig.add_axes([0.915, 0.16, 0.014, 0.68])
     cbar = fig.colorbar(im, cax=cax)
@@ -411,7 +479,7 @@ def fig3_field_comparison_combined(
             _style_fig3_panel_frame(axes[r, c], COLORS[key])
 
     t_text = ", ".join(str(t) for t in t_indices)
-    fig.suptitle(f"Figure 3. SWE field comparison across timesteps [{t_text}]", fontsize=12, fontweight="bold")
+    fig.suptitle(f"Figure 2. SWE field comparison across timesteps [{t_text}]", fontsize=12, fontweight="bold")
     fig.tight_layout(rect=[0, 0, 0.90, 0.93])
     if image_handle is not None:
         cax = fig.add_axes([0.915, 0.14, 0.014, 0.72])
@@ -565,12 +633,54 @@ def fig4_error_comparison(
     step_stride = int(rmse_data.get("step_stride", 1))
     stride_note = f", stride={step_stride}" if step_stride > 1 else ""
     fig.suptitle(
-        f"Figure 4. RMSE timeline across models ({rmse_data['n_steps']} steps{stride_note}, {rmse_data['n_eval_seeds']} test seeds)",
+        f"Figure 3. RMSE timeline across models ({rmse_data['n_steps']} steps{stride_note}, {rmse_data['n_eval_seeds']} test seeds)",
         fontsize=11,
         fontweight="bold",
     )
     fig.tight_layout(rect=[0.0, 0.0, 0.76, 0.95])
-    save(fig, "fig4_error_comparison.png")
+    save(fig, "fig3_error_comparison.png")
+
+
+def fig4_aggregate_rmse(summary: dict):
+    models = [m for m in MODEL_ORDER if m in summary]
+    if not models:
+        print("  [warn] Skipping aggregate RMSE figure: summary metrics not available")
+        return
+
+    labels = [MODEL_LABELS[m] for m in models]
+    colors = [COLORS[m] for m in models]
+    rmse = [summary[m].get("rmse", float("nan")) for m in models]
+
+    x = np.arange(len(models))
+    fig, ax = plt.subplots(1, 1, figsize=(6.6, 4.2))
+
+    bars = ax.bar(x, rmse, color=colors, edgecolor="white")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=18, ha="right", fontsize=FIG45_TICK_LABEL_FONTSIZE)
+    ax.set_ylabel("RMSE", fontsize=FIG45_AXIS_LABEL_FONTSIZE)
+    ax.tick_params(axis="y", labelsize=FIG45_TICK_LABEL_FONTSIZE)
+    ax.set_title("Aggregate RMSE across models", fontweight="bold")
+
+    finite_vals = [float(v) for v in rmse if is_finite(v)]
+    if finite_vals:
+        ymax = max(finite_vals)
+        ax.set_ylim(0.0, ymax * 1.18 if ymax > 0 else 1.0)
+
+    for b, v in zip(bars, rmse):
+        if is_finite(v):
+            ax.text(
+                b.get_x() + b.get_width() / 2,
+                b.get_height() * 1.02,
+                f"{float(v):.4e}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                color="black",
+            )
+
+    fig.suptitle("Figure 4. Aggregate RMSE comparison across models", fontsize=11, fontweight="bold")
+    fig.tight_layout(rect=[0.0, 0.03, 1.0, 0.95])
+    save(fig, "fig4_aggregate_rmse.png")
 
 
 def fig5_speedup(summary: dict):
@@ -648,6 +758,8 @@ def main():
 
     print("[generate_figures] Creating figures ...")
 
+    fig2_training_validation_loss()
+
     if args.t_indices.strip():
         requested = [s.strip() for s in args.t_indices.split(",") if s.strip()]
         raw_timesteps: list[int] = []
@@ -681,6 +793,7 @@ def main():
         max_samples=args.rmse_samples,
         step_stride=args.rmse_stride,
     )
+    fig4_aggregate_rmse(summary)
     fig5_speedup(summary)
 
     print(f"[generate_figures] Done. Figures saved in {FIG_DIR}")
