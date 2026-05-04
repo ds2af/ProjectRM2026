@@ -129,7 +129,6 @@ def main():
         for model, mdata in ms.items():
             if model in summary["models"]:
                 summary["models"][model]["rmse"]             = mdata.get("rmse")
-                summary["models"][model]["rel_l2"]           = mdata.get("rel_l2")
                 summary["models"][model]["inference_time_s"] = mdata.get("inference_time_s")
                 summary["models"][model]["n_params"]         = mdata.get("n_params")
                 summary["models"][model]["source"]           = mdata.get("source", "measured")
@@ -165,14 +164,13 @@ def main():
     print(f"\n{'='*70}")
     print(f"  COMPLETE — total wall clock: {fmt_time(total_elapsed)}")
     print(f"{'='*70}")
-    print(f"\n  {'Model':<14} {'Train time':>12} {'RMSE':>12} {'RelL2':>10} {'Infer(s)':>10} {'Params':>12}")
-    print(f"  {'-'*72}")
+    print(f"\n  {'Model':<14} {'Train time':>12} {'RMSE':>12} {'Infer(s)':>10} {'Params':>12}")
+    print(f"  {'-'*60}")
     for model, info in summary["models"].items():
         rmse_s  = f"{info.get('rmse', 'N/A'):.4e}"   if isinstance(info.get('rmse'), float)  else "N/A"
-        rel_s   = f"{info.get('rel_l2', 'N/A'):.4e}" if isinstance(info.get('rel_l2'), float) else "N/A"
         inf_s   = f"{info.get('inference_time_s', 0):.3f}" if info.get('inference_time_s') else "N/A"
         par_s   = f"{info.get('n_params', 0):,}"     if info.get('n_params')               else "N/A"
-        print(f"  {model:<14} {info['train_time_fmt']:>12} {rmse_s:>12} {rel_s:>10} {inf_s:>10} {par_s:>12}")
+        print(f"  {model:<14} {info['train_time_fmt']:>12} {rmse_s:>12} {inf_s:>10} {par_s:>12}")
     print()
 
     # Update summary with final timing

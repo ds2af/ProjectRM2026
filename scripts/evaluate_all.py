@@ -53,8 +53,6 @@ def load_metric(results_dir: Path, model_key: str) -> dict:
         return {
             "model": model_key,
             "rmse": _nan(),
-            "rel_l2": _nan(),
-            "max_error": _nan(),
             "inference_time_s": _nan(),
             "n_params": 0,
             "source": "missing",
@@ -85,8 +83,6 @@ def main():
         summary[key] = {
             "display_name": MODEL_DISPLAY_NAMES[key],
             "rmse": metrics.get("rmse", _nan()),
-            "rel_l2": metrics.get("rel_l2", _nan()),
-            "max_error": metrics.get("max_error", _nan()),
             "inference_time_s": metrics.get("inference_time_s", _nan()),
             "n_params": metrics.get("n_params", 0),
             "source": metrics.get("source", "missing"),
@@ -97,17 +93,15 @@ def main():
         json.dump(summary, f, indent=2)
 
     print("\n[evaluate_all] ----- Results Summary -----")
-    print(f"{'Model':<16}{'RMSE':>12}{'Rel-L2':>12}{'Inf.time(s)':>14}{'Source':>12}")
-    print("-" * 66)
+    print(f"{'Model':<16}{'RMSE':>12}{'Inf.time(s)':>14}{'Source':>12}")
+    print("-" * 54)
     for key in MODEL_ORDER:
         row = summary[key]
         rmse = row["rmse"]
-        rel = row["rel_l2"]
         t = row["inference_time_s"]
         rmse_s = f"{rmse:.4e}" if _is_finite(rmse) else "nan"
-        rel_s = f"{rel:.4e}" if _is_finite(rel) else "nan"
         t_s = f"{t:.3f}" if _is_finite(t) else "nan"
-        print(f"{row['display_name']:<16}{rmse_s:>12}{rel_s:>12}{t_s:>14}{row['source']:>12}")
+        print(f"{row['display_name']:<16}{rmse_s:>12}{t_s:>14}{row['source']:>12}")
 
     print(f"\n[evaluate_all] Summary saved -> {out_path}")
 

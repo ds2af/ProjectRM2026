@@ -78,7 +78,7 @@ python scripts/train_all.py \
 
 **Outputs:**
 - `results/training_summary.json` — wall-clock times, metrics, model checkpoints
-- `results/metrics_summary.json` — aggregated RMSE, rel_l2, max_error, inference time per model
+- `results/metrics_summary.json` — aggregated RMSE and inference time per model
 - Checkpoints: `results/checkpoints/{unet,unet_lomix,fno}_best.pt`
 
 ### Evaluation & Metrics
@@ -91,14 +91,13 @@ python scripts/evaluate_all.py
 ### Figure Generation
 
 ```bash
-# Generate all publication figures (Figures 3–6)
+# Generate all publication figures (Figures 3–5)
 python scripts/generate_figures.py
 ```
 
 **Figures produced:**
 - **fig3_field_comparison.png** — Spatial field predictions at a single timestep
 - **fig4_error_comparison.png** — RMSE timeline (autoregressive rollout error growth)
-- **fig4_error_comparison_bar.png** — Summary bar chart: RMSE, rel_l2, max_error
 - **fig5_speedup.png** — Inference time comparison
 
 
@@ -144,7 +143,7 @@ python scripts/export_vtk.py --model unet_lomix --n_samples 3 --n_timesteps 50
 │   │   └── __init__.py
 │   └── utils/
 │       ├── trainer.py                 # Shared training loop (autoregressive support)
-│       ├── metrics.py                 # RMSE, rel_l2, max_error evaluation
+│       ├── metrics.py                 # RMSE evaluation
 │       ├── logger.py                  # CSV/JSON logging
 │       └── __init__.py
 ├── results/                           # Generated outputs

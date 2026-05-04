@@ -14,7 +14,7 @@ Models:
 - FNO
 
 For each repeat (default 10), this script trains all four models with a fixed
-seed, collects evaluation metrics, computes omnibus + pairwise significance,
+seed, collects RMSE and inference time, computes omnibus + pairwise significance,
 and generates a box-and-whisker plot with significance annotations.
 
 Usage
@@ -53,7 +53,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed-start", type=int, default=100)
     p.add_argument("--epochs", type=int, default=500, help="Epochs per model training (default: 500)")
     p.add_argument("--quick", action="store_true")
-    p.add_argument("--metric", default="rmse", choices=["rmse", "rel_l2", "max_error", "inference_time_s"])
+    p.add_argument("--metric", default="rmse", choices=["rmse", "inference_time_s"])
     p.add_argument("--out-dir", default="results/statistical_significance")
     p.add_argument("--max-retries", type=int, default=1, help="Retries per failed model run")
     p.add_argument("--resume-existing", action="store_true", help="Resume from existing repeated_runs.csv if present")
@@ -94,8 +94,6 @@ def load_existing_rows(csv_path: Path) -> List[dict]:
                     "seed": int(r["seed"]),
                     "model": r["model"],
                     "rmse": float(r["rmse"]),
-                    "rel_l2": float(r["rel_l2"]),
-                    "max_error": float(r["max_error"]),
                     "inference_time_s": float(r["inference_time_s"]),
                     "n_params": float(r["n_params"]),
                 }
@@ -109,15 +107,13 @@ def append_row(csv_path: Path, row: dict) -> None:
     with csv_path.open("a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         if write_header:
-            writer.writerow(["repeat", "seed", "model", "rmse", "rel_l2", "max_error", "inference_time_s", "n_params"])
+            writer.writerow(["repeat", "seed", "model", "rmse", "inference_time_s", "n_params"])
         writer.writerow(
             [
                 row["repeat"],
                 row["seed"],
                 row["model"],
                 f"{row['rmse']:.10e}",
-                f"{row['rel_l2']:.10e}",
-                f"{row['max_error']:.10e}",
                 f"{row['inference_time_s']:.10e}",
                 f"{row['n_params']:.0f}",
             ]
@@ -326,18 +322,13 @@ def main() -> None:
                 "seed": seed,
                 "model": m["label"],
                 "rmse": float(metrics.get("rmse", math.nan)),
-                "rel_l2": float(metrics.get("rel_l2", math.nan)),
-                "max_error": float(metrics.get("max_error", math.nan)),
                 "inference_time_s": float(metrics.get("inference_time_s", math.nan)),
                 "n_params": float(metrics.get("n_params", math.nan)),
             }
             all_rows.append(row)
             completed.add(run_key)
             append_row(csv_path, row)
-            print(
-                f"  -> {m['label']}: rmse={row['rmse']:.4e}, rel_l2={row['rel_l2']:.4e}, "
-                f"max={row['max_error']:.4e}, t_inf={row['inference_time_s']:.4f}s"
-            )
+            print(f"  -> {m['label']}: rmse={row['rmse']:.4e}, t_inf={row['inference_time_s']:.4f}s")
 
     metric = args.metric
     by_model: Dict[str, np.ndarray] = {}

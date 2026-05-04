@@ -169,7 +169,7 @@ def run(cfg, quick=False, epoch_override=None, resume=False, seed=None):
     metrics["n_params"]         = n_params
     logger.save_metrics(metrics)
     logger.close()
-    print(f"[train_fno] Done. RMSE={metrics['rmse']:.4e}  relL2={metrics['rel_l2']:.4e}")
+    print(f"[train_fno] Done. RMSE={metrics['rmse']:.4e}  inf={metrics['inference_time_s']:.4f}s")
 
 
 if __name__ == "__main__":

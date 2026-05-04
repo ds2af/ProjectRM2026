@@ -1,5 +1,5 @@
 """
-Generate four publication figures for the three-model SWE surrogate comparison.
+Generate three publication figures for the three-model SWE surrogate comparison.
 
 AI Disclaimer
 -------------
@@ -11,7 +11,6 @@ Figures produced
 ----------------
 1. figures/fig3_field_comparison.png
 2. figures/fig4_error_comparison.png  (RMSE per timestep, merged across models)
-2b. figures/fig4_error_comparison_bar.png  (bar-chart summary: RMSE, Relative L2, Max Error)
 3. figures/fig5_speedup.png
 """
 
@@ -574,64 +573,6 @@ def fig4_error_comparison(
     save(fig, "fig4_error_comparison.png")
 
 
-def fig4_error_comparison_bar(summary: dict):
-    models = [m for m in MODEL_ORDER if m in summary]
-    if not models:
-        print("  [warn] Skipping Figure 4 bar chart: summary metrics not available")
-        return
-
-    labels = [MODEL_LABELS[m] for m in models]
-    colors = [COLORS[m] for m in models]
-    rmse = [summary[m].get("rmse", float("nan")) for m in models]
-    rel_l2 = [summary[m].get("rel_l2", float("nan")) for m in models]
-
-    x = np.arange(len(models))
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4.2))
-
-    panels = [
-        (axes[0], rmse, "RMSE"),
-        (axes[1], rel_l2, "Relative L2"),
-    ]
-
-    for ax, values, ylabel in panels:
-        bars = ax.bar(x, values, color=colors, edgecolor="white")
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=18, ha="right", fontsize=FIG45_TICK_LABEL_FONTSIZE)
-        ax.set_ylabel(ylabel, fontsize=FIG45_AXIS_LABEL_FONTSIZE)
-        ax.tick_params(axis="y", labelsize=FIG45_TICK_LABEL_FONTSIZE)
-        ax.set_title(ylabel, fontweight="bold")
-
-        finite_vals = [float(v) for v in values if is_finite(v)]
-        if finite_vals:
-            ymax = max(finite_vals)
-            ax.set_ylim(0.0, ymax * 1.18 if ymax > 0 else 1.0)
-
-        for i, (b, v) in enumerate(zip(bars, values)):
-            if is_finite(v):
-                ax.text(
-                    b.get_x() + b.get_width() / 2,
-                    b.get_height() * 1.02,
-                    f"{float(v):.4f}",
-                    ha="center",
-                    va="bottom",
-                    fontsize=8,
-                    color="black",
-                )
-
-    fig.suptitle("Figure 4b. Error comparison bar chart across models", fontsize=11, fontweight="bold")
-    fig.text(
-        0.5,
-        0.01,
-        "",
-        ha="center",
-        va="bottom",
-        fontsize=8,
-        color="#555555",
-    )
-    fig.tight_layout(rect=[0.0, 0.04, 1.0, 0.95])
-    save(fig, "fig4_error_comparison_bar.png")
-
-
 def fig5_speedup(summary: dict):
     models = [m for m in MODEL_ORDER if m in summary]
     if not models:
@@ -740,7 +681,6 @@ def main():
         max_samples=args.rmse_samples,
         step_stride=args.rmse_stride,
     )
-    fig4_error_comparison_bar(summary)
     fig5_speedup(summary)
 
     print(f"[generate_figures] Done. Figures saved in {FIG_DIR}")
