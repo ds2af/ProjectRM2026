@@ -1,5 +1,8 @@
 # ML Surrogate Models for 2D Shallow Water Equations
 
+**Course:** Research Methods  
+**Author:** Dipesh Shrestha
+
 A comparative study of three machine learning architectures for fast surrogate modeling of 2D partial differential equations (PDEs), specifically shallow water equations (SWE). This project benchmarks **U-Net**, **U-Net LoMix** (multi-scale fusion), and **Fourier Neural Operator (FNO)** against ground truth numerical simulations.
 
 ## Overview
