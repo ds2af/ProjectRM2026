@@ -1,9 +1,13 @@
-# ML Surrogate Models for 2D Shallow Water Equations
+# achine Learning for SWE-Based Fluid Flow Simulation: A Comparative Study of U-Net, U-Net (LoMix), and FNO
 
 **Course:** Research Methods  
 **Author:** Dipesh Shrestha
 
 A comparative study of three machine learning architectures for fast surrogate modeling of 2D partial differential equations (PDEs), specifically shallow water equations (SWE). This project benchmarks **U-Net**, **U-Net LoMix** (multi-scale fusion), and **Fourier Neural Operator (FNO)** against ground truth numerical simulations.
+
+## Abstract: 
+
+Computational fluid dynamics is widely used to study fluid flow, but numerical simulation is often expensive in time and computing resources. This becomes a challenge in applications such as flood prediction, where fast and reliable results are needed. This study compares machine learning surrogate models as faster alternatives for shallow water flow prediction. The three models considered are U-Net, U-Net (LoMix), and the Fourier Neural Operator (FNO). All three models are trained and tested on the same PDEBench radial dam-break dataset using the same one-step prediction task, training setup, and evaluation measures to ensure a fair comparison. Model performance is evaluated using root mean squared error (RMSE), qualitative field comparison, and inference runtime. The results show that FNO performs best overall, achieving the lowest prediction error, the fastest inference time, and the closest agreement with the ground-truth fields. U-Net (LoMix) performs better than standard U-Net, showing that multi-scale fusion improves prediction quality. Overall, this study suggests that operator-learning methods such as FNO are promising for accurate and efficient shallow water prediction.
 
 ## Overview
 
