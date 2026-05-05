@@ -119,48 +119,6 @@ python scripts/export_vtk.py --model unet_lomix --n_samples 3 --n_timesteps 50
 **Outputs:** `results/vtk/{model_name}/sample*.vtk` files
 
 
-## Project Structure
-
-```
-.
-├── README.md                          # This file
-├── LICENSE                            # MIT License
-├── requirements.txt                   # Python dependencies
-├── configs/
-│   └── default.yaml                   # Default configuration (data, training, model params)
-├── scripts/
-│   ├── train_unet.py                  # Train U-Net / U-Net LoMix
-│   ├── train_fno.py                   # Train FNO2d
-│   ├── train_all.py                   # Master orchestrator (trains all, runs eval + figures)
-│   ├── evaluate_all.py                # Aggregate metrics into JSON summary
-│   ├── generate_figures.py            # Generate publication figures (3–6)
-│   ├── export_vtk.py                  # Export predictions to VTK
-│   └── measure_inference_time.py      # Generate boxplot with bootstrap 95% CI for inference times
-├── src/
-│   ├── models/
-│   │   ├── unet.py                    # UNet2d & UNet2dLoMix implementations
-│   │   └── fno.py                     # FNO2d (Fourier Neural Operator)
-│   ├── data/
-│   │   ├── dataset.py                 # SWEDataset, SWEDatasetWithGrid
-│   │   ├── preprocessing.py           # Normalization utilities
-│   │   └── __init__.py
-│   └── utils/
-│       ├── trainer.py                 # Shared training loop (autoregressive support)
-│       ├── metrics.py                 # RMSE evaluation
-│       ├── logger.py                  # CSV/JSON logging
-│       └── __init__.py
-├── results/                           # Generated outputs
-│   ├── checkpoints/                   # Model checkpoints
-│   ├── logs/                          # Training curves (CSV)
-│   ├── metrics/                       # Per-model metrics (JSON)
-│   ├── figures/                       # Publication figures
-│   ├── vtk/                           # VTK exports
-│   ├── metrics_summary.json           # Aggregated metrics
-│   └── training_summary.json          # Training times & summary
-└── figures/                           # Pre-generated figures (archival)
-    └── old/                           # Old figure revisions
-```
-
 ## Models
 
 ### U-Net (Vanilla)
