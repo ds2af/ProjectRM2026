@@ -11,7 +11,7 @@ Computational fluid dynamics is widely used to study fluid flow, but numerical s
 
 ## Overview
 
-This repository provides  three PDE surrogate models:
+This repository provides three PDE surrogate models:
 
 - UNet
 - UNet LoMix
@@ -80,12 +80,6 @@ Notes
 - `scripts/train_unet.py` also supports `--quick` and `--resume`
 - `scripts/export_vtk.py` writes VTK files under `results/vtk/`
 - `scripts/run_repeated_significance.py` is optional for repeated experiments
-
-AI Disclaimer
--------------
-
-This project codes were drafted with assistance from ChatGPT and GitHub Copilot.
-The content was checked and verified by the author.
 
 ## References
 
