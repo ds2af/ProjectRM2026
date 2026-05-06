@@ -14,7 +14,7 @@ Computational fluid dynamics is widely used to study fluid flow, but numerical s
 This repository provides three PDE surrogate models:
 
 - UNet
-- UNet LoMix
+- UNet LoMix (simplified LoMix-style variant)
 - FNO
 
 What it does
@@ -83,10 +83,10 @@ Notes
 
 ## References
 
-- **U-Net:** Ronneberger, Fischer, Brox (2015). *U-Net: Convolutional Networks for Biomedical Image Segmentation.* MICCAI.
-- **U-Net LoMix:** Rahman, Marculescu (2025). *LoMix: Low-resolution Multi-scale Mixing.*
-- **FNO:** Kovachki, Li, et al. (2021). *Fourier Neural Operator for Parametric Partial Differential Equations.* ICLR.
-- **PDEBench Dataset:** Takamoto, Sappl, Weiß, et al. (2022). *PDEBench: Comprehensive Benchmark for Scientific Machine Learning.* [arXiv:2210.07182](https://arxiv.org/abs/2210.07182)
+- **U-Net:** Ronneberger, O., Fischer, P., & Brox, T. (2015). *U-Net: Convolutional Networks for Biomedical Image Segmentation.* In Proceedings of the 18th International Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI).
+- **U-Net LoMix:** Simplified LoMix-style variant inspired by Rahman, M. M., & Marculescu, R. (2025). *LoMix: Learnable Weighted Multi-Scale Logits Mixing for Medical Image Segmentation.* In Advances in Neural Information Processing Systems (NeurIPS 2025).
+- **FNO:** Kovachki, N., Li, Z., et al. (2021). *Fourier Neural Operator for Parametric Partial Differential Equations.* In International Conference on Learning Representations (ICLR 2021).
+- **PDEBench Dataset:** Takamoto, M., Sappl, R., Weiß, T., et al. (2022). *PDEBench: Comprehensive Benchmark for Scientific Machine Learning.* arXiv:2210.07182. https://arxiv.org/abs/2210.07182
 
 ## Authorship & Disclaimer
 
