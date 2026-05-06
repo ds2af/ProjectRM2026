@@ -33,7 +33,6 @@ References
 Z. Li, N. Kovachki, K. Azizzadenesheli, et al.  "Fourier Neural Operator for
 Parametric Partial Differential Equations." ICLR 2021.
 """
-"""
 
 from __future__ import annotations
 
