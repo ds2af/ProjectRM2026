@@ -61,6 +61,12 @@ python scripts/evaluate_all.py
 python scripts/generate_figures_wrapper.py
 ```
 
+6. Run repeated significance experiments for runtime nference boxplots:
+
+```bash
+python scripts/run_repeated_significance.py --config configs/default.yaml --repeats 30 --discard-first 5
+```
+
 Main outputs
 ------------
 
