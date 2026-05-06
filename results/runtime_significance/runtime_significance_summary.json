@@ -1,0 +1,72 @@
+{
+  "config": "configs/default.yaml",
+  "repeats": 30,
+  "drop_first": 5,
+  "seed_start": 100,
+  "metric": "inference_time_s",
+  "summary": {
+    "U-Net": {
+      "n": 25,
+      "mean": 3.300889984,
+      "std": 0.06283460460323383,
+      "median": 3.2933575,
+      "q1": 3.2619495,
+      "q3": 3.3175283
+    },
+    "U-Net (LoMix)": {
+      "n": 25,
+      "mean": 3.65090872,
+      "std": 0.1289905609524427,
+      "median": 3.6090007,
+      "q1": 3.5776728,
+      "q3": 3.6962324
+    },
+    "FNO": {
+      "n": 25,
+      "mean": 3.0809007559999997,
+      "std": 0.05390521252004211,
+      "median": 3.0707305,
+      "q1": 3.0398978,
+      "q3": 3.1171294
+    }
+  },
+  "omnibus": {
+    "test": "kruskal",
+    "statistic": 65.37111578947366,
+    "p_value": 6.380321578077607e-15
+  },
+  "pairwise": [
+    {
+      "model_a": "U-Net",
+      "model_b": "U-Net (LoMix)",
+      "test": "mannwhitneyu",
+      "u_stat": 4.0,
+      "p_raw": 2.2857387092009765e-09,
+      "p_holm": 4.2469686745486616e-09,
+      "significant_0.05": true
+    },
+    {
+      "model_a": "U-Net",
+      "model_b": "FNO",
+      "test": "mannwhitneyu",
+      "u_stat": 625.0,
+      "p_raw": 1.4156562248495537e-09,
+      "p_holm": 4.2469686745486616e-09,
+      "significant_0.05": true
+    },
+    {
+      "model_a": "U-Net (LoMix)",
+      "model_b": "FNO",
+      "test": "mannwhitneyu",
+      "u_stat": 625.0,
+      "p_raw": 1.4156562248495537e-09,
+      "p_holm": 4.2469686745486616e-09,
+      "significant_0.05": true
+    }
+  ],
+  "artifacts": {
+    "runs_csv": "results\\runtime_significance\\runtime_runs.csv",
+    "boxplot": "results\\runtime_significance\\boxplot_inference_time_s.png",
+    "boxplot_median": "results\\runtime_significance\\boxplot_inference_time_s_median.png"
+  }
+}

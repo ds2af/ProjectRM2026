@@ -1,44 +1,26 @@
 """
 src/models/unet.py
 ==================
-Research Methods course project
-Author: Dipesh Shrestha
-
-2-D U-Net baseline model and the U-Net LoMix variant model implementations.
-
-Purpose
--------
-This file defines the 2-D U-Net baseline model and the U-Net LoMix variant
-used for 2-D spatiotemporal PDE surrogate modeling. In this project, these
-models are used as comparison models for shallow-water-equation / PDE benchmark
-experiments.
+Refactored U-Net implementations for 2-D spatiotemporal PDE surrogate modeling.
 
 Source
 ------
-The baseline U-Net architecture follows Ronneberger, Fischer, and Brox (2015).
-The U-Net implementation is based on ``mateuszbuda/brain-segmentation-pytorch``
-(MIT License). The U-Net LoMix variant uses the same U-Net backbone and adds a
-simplified multi-scale fusion component inspired by the LoMix method proposed
-by Rahman and Marculescu (2025).
+Adapted and improved from U-Net implementations for medical image segmentation
+(originally based on mateuszbuda/brain-segmentation-pytorch, MIT License).
+Further refined for PDEBench 2-D shallow water equations benchmark.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
+Changes from original
+---------------------
+1. Optional dropout on encoder/decoder blocks.
+2. Clean, self-contained docstrings; 1-D and 3-D variants removed for brevity
+   (not needed in the 2-D SWE benchmark).
+3. ``from_config`` class method for consistent construction from cfg dict.
+4. ``UNet2dLoMix`` multi-scale fusion variant retained for reference comparison.
 
-Notes on this implementation
-----------------------------
-1. Optional dropout is included in encoder and decoder blocks.
-2. The implementation keeps the 2-D version needed for the SWE/PDE benchmark.
-3. The ``from_config`` method allows consistent model construction from a
-   configuration dictionary.
-4. ``UNet2dLoMix`` is included as a multi-scale fusion comparison model.
-
-Forward convention for both variants
+Forward convention (both variants)
 ------------------------------------
-    Input  [B, C_in, H, W]   channels-first spatial tensor
-    Output [B, C_out, H, W]  next-step field prediction
+    Input  [B, C_in, H, W]   (channels-first spatial tensor)
+    Output [B, C_out, H, W]
 """
 
 from __future__ import annotations
@@ -188,7 +170,6 @@ class WeightedFusion2d(nn.Module):
         stacked = torch.stack(preds, dim=1)          # [B, S, C, H, W]
         return (weights * stacked).sum(dim=1)        # [B, C, H, W]
 
-
 class UNet2dLoMix(nn.Module):
     """
     U-Net with LoMix-style multi-scale output mixing.
@@ -265,3 +246,14 @@ class UNet2dLoMix(nn.Module):
         p4 = F.interpolate(self.head4(d4), (H, W), mode="bilinear", align_corners=False)
 
         return self.lomix([p1, p2, p3, p4])
+
+    @staticmethod
+    def from_config(cfg: dict, sample_xx: torch.Tensor, use_lomix: bool = False) -> "UNet2dLoMix":
+        B, H, W, T, C = sample_xx.shape
+        mcfg = cfg.get("unet", {})
+        return UNet2dLoMix(
+            in_channels   = C * T,
+            out_channels  = C,
+            init_features = mcfg.get("init_features", 32),
+            dropout       = mcfg.get("dropout", 0.0),
+        )

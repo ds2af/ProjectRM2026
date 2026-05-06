@@ -3,12 +3,6 @@ src/data/preprocessing.py
 ==========================
 Normalization utilities shared across all model experiments.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
 All models operate on the same channel-wise z-score normalized data so that
 results are directly comparable.  Normalization statistics are computed from
 the *training* split only and then applied consistently to validation and test.

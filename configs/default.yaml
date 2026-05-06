@@ -5,7 +5,7 @@
 # ── Data ──────────────────────────────────────────────────────────────────────
 data:
   filename: "2D_rdb_NA_NA"           # HDF5 stem (without .h5)
-  base_path: "../data/"             # Relative path to the data directory
+  base_path: "../data/"           # Relative path from the project root
   initial_step: 10                   # Number of context timesteps fed as input
   t_train: 101                       # Number of total timesteps to supervise (PDEBench RDB reference)
   test_ratio: 0.1                    # Fraction of seeds held out for test
@@ -15,7 +15,7 @@ data:
 
 # ── Training ──────────────────────────────────────────────────────────────────
 training:
-  epochs: 200                        # full run target for U-Net, U-Net (LoMix), and FNO
+  epochs: 200                        # full run target for CNN/UNet/FNO
   batch_size: 4
   learning_rate: 1.0e-3
   weight_decay: 1.0e-4

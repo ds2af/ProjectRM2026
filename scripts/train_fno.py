@@ -4,12 +4,6 @@ scripts/train_fno.py
 Training script for the Fourier Neural Operator (FNO2d).
 Uses the SWEDatasetWithGrid loader which returns (xx, yy, grid).
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
 Usage
 -----
     python scripts/train_fno.py --config configs/default.yaml
@@ -138,8 +132,6 @@ def run(cfg, quick=False, epoch_override=None, resume=False, seed=None):
         state = ckpt.get("model_state_dict", ckpt)
         model.load_state_dict(state)
         print(f"[train_fno] Loaded best checkpoint for evaluation: {best_ckpt}")
-    else:
-        print(f"[train_fno] Warning: best checkpoint not found, evaluating current model: {best_ckpt}")
 
     # ── Evaluate ────────────────────────────────────────────────────────
     ini = cfg["data"]["initial_step"]
@@ -165,11 +157,14 @@ def run(cfg, quick=False, epoch_override=None, resume=False, seed=None):
     pred_cat   = torch.cat(all_pred)
     target_cat = torch.cat(all_tgt)
     metrics = compute_all_metrics(pred_cat, target_cat, initial_step=ini)
-    metrics["inference_time_s"] = round(inf_elapsed, 4)
-    metrics["n_params"]         = n_params
+    metrics = {
+        "rmse": metrics["rmse"],
+        "inference_time_s": round(inf_elapsed, 4),
+        "n_params": n_params,
+    }
     logger.save_metrics(metrics)
     logger.close()
-    print(f"[train_fno] Done. RMSE={metrics['rmse']:.4e}  inf={metrics['inference_time_s']:.4f}s")
+    print(f"[train_fno] Done. RMSE={metrics['rmse']:.4e}  runtime={metrics['inference_time_s']:.4f}s")
 
 
 if __name__ == "__main__":

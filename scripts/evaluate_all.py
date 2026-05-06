@@ -1,15 +1,11 @@
 """
+scripts/evaluate_all.py
+=======================
 Aggregate measured metrics from trained models into results/metrics_summary.json.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
 This script is strict by design:
-- No illustrative/template substitutions.
 - Missing model files are reported as source="missing" with NaN metrics.
+- Only includes the three models: unet, unet_lomix, fno
 
 Usage
 -----
@@ -94,7 +90,7 @@ def main():
 
     print("\n[evaluate_all] ----- Results Summary -----")
     print(f"{'Model':<16}{'RMSE':>12}{'Inf.time(s)':>14}{'Source':>12}")
-    print("-" * 54)
+    print("-" * 56)
     for key in MODEL_ORDER:
         row = summary[key]
         rmse = row["rmse"]

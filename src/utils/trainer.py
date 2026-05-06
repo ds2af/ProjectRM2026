@@ -1,21 +1,13 @@
-
 """
 src/utils/trainer.py
 =====================
-Generic training loop shared by U-Net, U-Net LoMix, and FNO.
+Generic training loop shared by U-Net and FNO.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
-Design
-------
+The trainer:
 * Supports both single-step and autoregressive rollout modes.
 * Decouples model-specific forward logic via a ``step_fn`` callback.
-    – ``step_fn(model, xx, yy, device) → pred, loss``  (for non-AR models)
-    – AR rollout is implemented inside the trainer for U-Net / FNO.
+  – ``step_fn(model, xx, yy, device) → pred, loss``  (for non-AR models)
+  – AR rollout is implemented inside the trainer for U-Net / FNO.
 * Saves best checkpoint (lowest validation loss) automatically.
 """
 
@@ -232,7 +224,7 @@ class Trainer:
 
     def _default_step(self, batch) -> torch.Tensor:
         """
-        Fallback single-step forward for U-Net and FNO models.
+        Fallback single-step forward for flat models.
         Predicts the *next* step from the context window.
         """
         xx, yy = batch[0].to(self.device), batch[1].to(self.device)
@@ -245,7 +237,7 @@ class Trainer:
 
     def _ar_step(self, batch, t_train, unroll_step, train: bool, use_pushforward: bool = True) -> torch.Tensor:
         """
-        Autoregressive pushforward step used by the supported surrogate models.
+        Autoregressive pushforward step used by U-Net and FNO.
 
         batch may be (xx, yy) or (xx, yy, grid).
         """
@@ -260,7 +252,6 @@ class Trainer:
 
         if t_train - unroll_step < 1:
             unroll_step = t_train - 1
-
 
         loss = torch.tensor(0.0, device=self.device)
         pred = yy[..., : self.initial_step, :]

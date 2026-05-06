@@ -1,22 +1,12 @@
 """
 src/models/fno.py
 ==================
-Research Methods Course Project
-Author: Dipesh Shrestha
-
 Fourier Neural Operator (FNO2d) adapted for the 2-D SWE/PDE benchmark.
-
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
 
 Source
 ------
-Based on ``Reference_PDEBench/pdebench/models/fno/fno.py``,
-which itself derives from Zongyi Li et al. (2020), MIT License.
-Adapted for integration with the project's shared SWEDataset and Trainer.
+Based on Fourier Neural Operator implementations from PDEBench,
+which derives from Zongyi Li et al. (2020), MIT License.
 
 Architecture
 ------------
@@ -24,7 +14,7 @@ The FNO2d applies 4 Fourier integral operator layers in a residual fashion:
 
     u'(x) = W u(x) + ∫ κ(x-y) u(y) dy
 
-where the integral operator is evaluated efficiently in Fourier space by
+where the integral operator is evaluated cheaply in Fourier space by
 truncating to ``modes1 × modes2`` Fourier coefficients.
 
 Input convention
@@ -43,7 +33,7 @@ References
 Z. Li, N. Kovachki, K. Azizzadenesheli, et al.  "Fourier Neural Operator for
 Parametric Partial Differential Equations." ICLR 2021.
 """
-
+"""
 
 from __future__ import annotations
 

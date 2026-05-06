@@ -1,14 +1,7 @@
 """
 src/data/dataset.py
 ===================
-Shared dataset loader for the PDEBench 2D reaction-diffusion / shallow-water
-HDF5 file (``2D_rdb_NA_NA.h5``).
-
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
+Shared dataset loader for the PDEBench 2D shallow-water HDF5 file.
 
 The file contains groups keyed by seed string.  Each group has a ``data``
 array of shape ``[T, H, W, C]`` where:

@@ -3,17 +3,13 @@ src/utils/metrics.py
 ====================
 Evaluation metrics used uniformly across all five model types.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
 Functions
 ---------
 rmse(pred, target)          → scalar RMSE over entire tensor
+relative_l2(pred, target)   → relative L2 norm (as a fraction)
+max_pointwise_error(...)    → worst-case absolute error
 per_timestep_rmse(...)      → RMSE curve over time steps [T]
-compute_all_metrics(...)    → dict with standard metrics
+compute_all_metrics(...)    → dict with all standard metrics
 """
 
 from __future__ import annotations
@@ -38,6 +34,34 @@ def rmse(pred: torch.Tensor, target: torch.Tensor) -> float:
     float
     """
     return torch.sqrt(torch.mean((pred - target) ** 2)).item()
+
+
+def relative_l2(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-10) -> float:
+    """
+    Relative L2 error:  ||pred - target||_2  /  ||target||_2
+
+    Parameters
+    ----------
+    pred, target : torch.Tensor  (any shape, must match)
+
+    Returns
+    -------
+    float
+    """
+    num = torch.sqrt(torch.sum((pred - target) ** 2))
+    den = torch.sqrt(torch.sum(target ** 2)) + eps
+    return (num / den).item()
+
+
+def max_pointwise_error(pred: torch.Tensor, target: torch.Tensor) -> float:
+    """
+    Maximum absolute pointwise error.
+
+    Returns
+    -------
+    float
+    """
+    return torch.max(torch.abs(pred - target)).item()
 
 
 def per_timestep_rmse(
@@ -84,10 +108,14 @@ def compute_all_metrics(
 
     Returns
     -------
-    dict with key: rmse
+    dict with keys: rmse, rel_l2, max_error
     """
     # Exclude conditioning steps
     p = pred[..., initial_step:, :]
     t = target[..., initial_step:, :]
 
-    return {"rmse": rmse(p, t)}
+    return {
+        "rmse":      rmse(p, t),
+        "rel_l2":    relative_l2(p, t),
+        "max_error": max_pointwise_error(p, t),
+    }

@@ -11,260 +11,81 @@ Computational fluid dynamics is widely used to study fluid flow, but numerical s
 
 ## Overview
 
-Machine learning surrogate models can accelerate PDE solving by orders of magnitude compared to direct numerical simulation. This repository provides:
+This repository provides  three PDE surrogate models:
 
-- **Three models** for comparison:
-  - **U-Net**: Standard 2D encoder-decoder CNN baseline
-  - **U-Net LoMix**: U-Net with multi-scale output fusion
-  - **FNO2d**: Fourier-based operator learning
+- UNet
+- UNet LoMix
+- FNO
 
-- **Automated training pipeline**: Single command to train all models sequentially
-- **Comprehensive evaluation**: RMSE, inference time
-- **Publication-ready figures**: Training/validation loss curves, field comparisons, RMSE curves, aggregate RMSE plots, speedup plots
-- **VTK export**: Visualization-ready output files for ParaView/VisIt
+What it does
+------------
 
-## Quick Start
+- trains the three models on the PDEBench 2D shallow-water dataset
+- evaluates RMSE and inference runtime
+- generates figures from saved logs and checkpoints
+- exports VTK files for visualization
 
-### Installation
+Quick Start
+-----------
+
+1. Install requirements:
 
 ```bash
-# Clone repository
-git clone <repo-url>
-cd ProjectRM2026
-
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Training All Models
+2. Make sure the HDF5 dataset is available at `../data/2D_rdb_NA_NA.h5`.
+
+3. Train the models:
 
 ```bash
-# Full training (200 epochs, all models)
-python scripts/train_all.py --config configs/default.yaml
-
-# Quick sanity check (3 epochs)
-python scripts/train_all.py --config configs/default.yaml --quick
-```
-
-### Quick Testing (Individual Models)
-
-```bash
-# Train U-Net only (vanilla, no LoMix)
-python scripts/train_unet.py --config configs/default.yaml --vanilla
-
-# Train U-Net LoMix (default)
+# UNet LoMix (default)
 python scripts/train_unet.py --config configs/default.yaml
 
-# Train FNO
+# Plain UNet
+python scripts/train_unet.py --config configs/default.yaml --vanilla
+
+# FNO
 python scripts/train_fno.py --config configs/default.yaml
 ```
 
-## Usage
-
-### Master Training Script
+4. Evaluate the saved models:
 
 ```bash
-python scripts/train_all.py \
-  --config configs/default.yaml \
-  --quick                           # Quick mode (3 epochs, 20 samples)
-  --epochs 150                      # Override training epochs
-  --models unet unet_lomix          # Train subset of models
-  --skip_vtk                        # Skip VTK export
-```
-
-**Outputs:**
-- `results/training_summary.json` — wall-clock times, metrics, model checkpoints
-- `results/metrics_summary.json` — aggregated RMSE and inference time per model
-- Checkpoints: `results/checkpoints/{unet,unet_lomix,fno}_best.pt`
-
-### Evaluation & Metrics
-
-```bash
-# Evaluate trained models and aggregate metrics
 python scripts/evaluate_all.py
 ```
 
-### Figure Generation
+5. Generate figures:
 
 ```bash
-# Generate all publication figures (Figures 1–5)
-python scripts/generate_figures.py
+python scripts/generate_figures_wrapper.py
 ```
 
-**Figures produced:**
-- **fig1_training_validation_loss.png** — Training and validation loss curves for each model
-- **fig2_field_comparison.png** — Spatial field predictions at a single timestep
-- **fig3_error_comparison.png** — RMSE timeline (autoregressive rollout error growth)
-- **fig4_aggregate_rmse.png** — Aggregate RMSE comparison across models
-- **fig5_speedup.png** — Inference time comparison
+Main outputs
+------------
 
+- `results/checkpoints/` - saved checkpoints
+- `results/logs/` - training logs
+- `results/metrics_summary.json` - evaluation summary
+- `figures/field_comparison.png` - prediction vs truth snapshot
+- `figures/error_comparison.png` - RMSE per timestep
+- `figures/error_comparison_bar.png` - RMSE and runtime bars
+- `figures/training_val_loss_curves.png` - loss curves
 
-### VTK Export (3D Visualization)
+Notes
+-----
 
-```bash
-# Export model predictions to VTK format for ParaView/VisIt
-python scripts/export_vtk.py --model fno --config configs/default.yaml
+- `scripts/train_unet.py` trains UNet LoMix by default
+- add `--vanilla` to train the plain UNet
+- `scripts/train_unet.py` also supports `--quick` and `--resume`
+- `scripts/export_vtk.py` writes VTK files under `results/vtk/`
+- `scripts/run_repeated_significance.py` is optional for repeated experiments
 
-# Export all models
-python scripts/export_vtk.py --model all --config configs/default.yaml
+AI Disclaimer
+-------------
 
-# Specify number of samples/timesteps
-python scripts/export_vtk.py --model unet_lomix --n_samples 3 --n_timesteps 50
-```
-
-**Outputs:** `results/vtk/{model_name}/sample*.vtk` files
-
-
-## Project Structure
-
-```
-.
-├── README.md                          # This file
-├── LICENSE                            # MIT License
-├── requirements.txt                   # Python dependencies
-├── configs/
-│   └── default.yaml                   # Default configuration (data, training, model params)
-├── scripts/
-│   ├── train_unet.py                  # Train U-Net / U-Net LoMix
-│   ├── train_fno.py                   # Train FNO2d
-│   ├── train_all.py                   # Master orchestrator (trains all, runs eval + figures)
-│   ├── evaluate_all.py                # Aggregate metrics into JSON summary
-│   ├── generate_figures.py            # Generate publication figures (3–6)
-│   ├── export_vtk.py                  # Export predictions to VTK
-│   └── measure_inference_time.py      # Generate boxplot with bootstrap 95% CI for inference times
-├── src/
-│   ├── models/
-│   │   ├── unet.py                    # UNet2d & UNet2dLoMix implementations
-│   │   └── fno.py                     # FNO2d (Fourier Neural Operator)
-│   ├── data/
-│   │   ├── dataset.py                 # SWEDataset, SWEDatasetWithGrid
-│   │   ├── preprocessing.py           # Normalization utilities
-│   │   └── __init__.py
-│   └── utils/
-│       ├── trainer.py                 # Shared training loop (autoregressive support)
-│       ├── metrics.py                 # RMSE evaluation
-│       ├── logger.py                  # CSV/JSON logging
-│       └── __init__.py
-├── results/                           # Generated outputs
-│   ├── checkpoints/                   # Model checkpoints
-│   ├── logs/                          # Training curves (CSV)
-│   ├── metrics/                       # Per-model metrics (JSON)
-│   ├── figures/                       # Publication figures
-│   ├── vtk/                           # VTK exports
-│   ├── metrics_summary.json           # Aggregated metrics
-│   └── training_summary.json          # Training times & summary
-└── figures/                           # Pre-generated figures (archival)
-    └── old/                           # Old figure revisions
-```
-
-## Models
-
-### U-Net (Vanilla)
-
-Standard 2D encoder-decoder CNN with skip connections. Encodes spatial features through downsampling, learns latent representation, decodes back to full resolution.
-
-- **Training:** `train_unet.py --vanilla`
-- **Checkpoint:** `results/checkpoints/unet_best.pt`
-
-### U-Net LoMix
-
-U-Net backbone with **multi-scale output fusion**. Produces predictions at 4 decoder depths, upsamples each to full resolution, and fuses them using learned per-pixel weights.
-
-- **Training:** `train_unet.py` (default)
-- **Checkpoint:** `results/checkpoints/unet_lomix_best.pt`
-- **Purpose:** Compare multi-scale fusion against the vanilla U-Net baseline
-
-### FNO2d (Fourier Neural Operator)
-
-Operator learning via Fourier-space convolution. Lifts input to latent space, applies 4 spectral convolution layers with residual skip connections, then projects back to output space.
-
-- **Training:** `train_fno.py`
-- **Checkpoint:** `results/checkpoints/fno_best.pt`
-- **Special handling:** Requires grid coordinates; uses `SWEDatasetWithGrid`
-
-
-## Configuration
-
-Default hyperparameters are in `configs/default.yaml`:
-
-```yaml
-data:
-  filename: "2D_rdb_NA_NA"        # HDF5 dataset
-  initial_step: 10                # Context window
-  t_train: 101                    # Supervised training timesteps
-  test_ratio: 0.1                 # Train/val/test split
-  
-training:
-  epochs: 200
-  batch_size: 4
-  learning_rate: 1e-3
-  early_stopping_patience: 20
-
-unet:
-  init_features: 32
-  dropout: 0.0
-  unroll_step: 20                 # Pushforward window for AR training
-
-fno:
-  modes1: 12                      # Fourier modes (x-direction)
-  modes2: 12                      # Fourier modes (y-direction)
-  width: 20                       # Internal latent width
-```
-
-## Dataset
-
-This project uses the **radial dam-break benchmark** from the [PDEBench](https://github.com/pdebench/PDEBench) dataset collection. The dataset contains solutions to shallow water equations (SWE) generated by numerical simulation.
-
-**Important:** The dataset is **not included** in this GitHub repository due to file size constraints. You must download it separately:
-
-1. **Download PDEBench dataset:**
-   - Visit: https://github.com/pdebench/PDEBench
-   - Follow their instructions to download the 2D shallow water equations (SWE) radial dam-break dataset
-   - The file is named `2D_rdb_NA_NA.h5`
-
-2. **Place the dataset:**
-   ```
-   data/
-   └── 2D_rdb_NA_NA.h5         # Place downloaded file here
-   ```
-
-3. **Dataset structure:**
-   - 100+ independent trajectories (seeds), each with 200 timesteps
-   - Spatial resolution: 128×128 grid
-   - Variables: water height (h), velocity components (u, v)
-   - Train/val/test split: 80%/10%/10% (deterministic by seed index)
-
-**Reference:** Takamoto et al. (2022). PDEBench: Comprehensive Benchmark for Scientific Machine Learning. See [arXiv:2210.07182](https://arxiv.org/abs/2210.07182).
-
-## Data Format
-
-The project expects HDF5 files with structure:
-
-```
-data/
-└── 2D_rdb_NA_NA.h5
-    ├── seed_0/
-    │   └── data [T, H, W, C]    # T timesteps, H×W spatial grid, C channels
-    ├── seed_1/
-    │   └── data [T, H, W, C]
-    └── ...
-```
-
-Each seed is an independent trajectory. The dataset is split deterministically by seed index (10% test, 10% validation, 80% training by default).
-
-## Requirements
-
-- **Python:** 3.9+
-- **Core:** PyTorch ≥2.0, NumPy ≥1.24, SciPy ≥1.10
-- **Data I/O:** h5py ≥3.8
-- **Plotting:** Matplotlib ≥3.7
-- **Config:** PyYAML ≥6.0
-
-See `requirements.txt` for pinned versions.
+This project codes were drafted with assistance from ChatGPT and GitHub Copilot.
+The content was checked and verified by the author.
 
 ## References
 

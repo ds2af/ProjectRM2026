@@ -1,15 +1,7 @@
-# Core deep learning
-torch>=2.0.0
-torchvision>=0.15.0
-
-# Scientific computing
-numpy>=1.24.0
-scipy>=1.10.0
-h5py>=3.8.0
-
-# Visualization
-matplotlib>=3.7.0
-
-# Configuration management
-pyyaml>=6.0.0
-
+h5py
+matplotlib
+numpy
+pandas
+pyyaml
+scipy
+torch

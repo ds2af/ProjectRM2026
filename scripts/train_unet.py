@@ -4,17 +4,10 @@ scripts/train_unet.py
 Training script for the U-Net (vanilla or LoMix variant) surrogate model,
 using autoregressive pushforward rollout.
 
-AI Disclaimer
--------------
-Coding assistance from ChatGPT and GitHub Copilot was used during development.
-The author has thoroughly reviewed, checked, and verified the code for correctness
-and takes responsibility for the final implementation used in this project.
-
 Usage
 -----
     python scripts/train_unet.py --config configs/default.yaml
     python scripts/train_unet.py --config configs/default.yaml --quick
-    python scripts/train_unet.py --config configs/default.yaml --vanilla  # UNet2d only
 """
 
 from __future__ import annotations
@@ -64,12 +57,6 @@ def _sync_if_cuda(device: torch.device) -> None:
     """Synchronize CUDA stream for stable wall-clock timing."""
     if device.type == "cuda":
         torch.cuda.synchronize()
-
-
-def _try_load_resume_checkpoint(trainer: Trainer, checkpoint_path: Path) -> int:
-    """Load a checkpoint if it is readable and return the saved epoch."""
-    loaded_epoch = trainer.load_checkpoint(checkpoint_path)
-    return int(loaded_epoch)
 
 
 def run(cfg, quick=False, epoch_override=None, use_lomix=True, seed=None, resume=False):
@@ -124,23 +111,18 @@ def run(cfg, quick=False, epoch_override=None, use_lomix=True, seed=None, resume
         ckpt_best = ckpt_dir / f"{model_tag}_best.pt"
         if ckpt_last.exists():
             try:
-                loaded_epoch = _try_load_resume_checkpoint(trainer, ckpt_last)
-                start_epoch = loaded_epoch + 1
+                loaded_epoch = trainer.load_checkpoint(ckpt_last)
+                start_epoch = int(loaded_epoch) + 1
                 print(f"[train_unet] Resuming from {ckpt_last} at epoch {start_epoch}")
             except Exception as exc:
                 print(f"[train_unet] Warning: failed to load {ckpt_last}: {exc}")
                 if ckpt_best.exists():
-                    loaded_epoch = _try_load_resume_checkpoint(trainer, ckpt_best)
-                    start_epoch = loaded_epoch + 1
-                    print(f"[train_unet] Falling back to {ckpt_best} at epoch {start_epoch}")
-                else:
-                    print("[train_unet] Resume requested but no readable checkpoint found; starting from scratch.")
-        elif ckpt_best.exists():
-            loaded_epoch = _try_load_resume_checkpoint(trainer, ckpt_best)
-            start_epoch = loaded_epoch + 1
-            print(f"[train_unet] Resuming from {ckpt_best} at epoch {start_epoch}")
-        else:
-            print("[train_unet] Resume requested but no checkpoint found; starting from scratch.")
+                    try:
+                        loaded_epoch = trainer.load_checkpoint(ckpt_best)
+                        start_epoch = int(loaded_epoch) + 1
+                        print(f"[train_unet] Falling back to {ckpt_best} at epoch {start_epoch}")
+                    except Exception:
+                        print("[train_unet] Resume requested but no readable checkpoint found; starting from scratch.")
 
     unroll = mcfg.get("unroll_step", 20)
     t_train = cfg["data"].get("t_train", 40)
@@ -163,8 +145,6 @@ def run(cfg, quick=False, epoch_override=None, use_lomix=True, seed=None, resume
         state = ckpt.get("model_state_dict", ckpt)
         model.load_state_dict(state)
         print(f"[train_unet] Loaded best checkpoint for evaluation: {best_ckpt}")
-    else:
-        print(f"[train_unet] Warning: best checkpoint not found, evaluating current model: {best_ckpt}")
 
     # ── Evaluate ────────────────────────────────────────────────────────
     ini = cfg["data"]["initial_step"]
@@ -191,11 +171,14 @@ def run(cfg, quick=False, epoch_override=None, use_lomix=True, seed=None, resume
     pred_cat   = torch.cat(all_pred)
     target_cat = torch.cat(all_tgt)
     metrics = compute_all_metrics(pred_cat, target_cat, initial_step=ini)
-    metrics["inference_time_s"] = round(inf_elapsed, 4)
-    metrics["n_params"]         = n_params
+    metrics = {
+        "rmse": metrics["rmse"],
+        "inference_time_s": round(inf_elapsed, 4),
+        "n_params": n_params,
+    }
     logger.save_metrics(metrics)
     logger.close()
-    print(f"[train_unet] Done. RMSE={metrics['rmse']:.4e}  inf={metrics['inference_time_s']:.4f}s")
+    print(f"[train_unet] Done. RMSE={metrics['rmse']:.4e}  runtime={metrics['inference_time_s']:.4f}s")
 
 
 if __name__ == "__main__":
